@@ -1,5 +1,6 @@
-const GRID_PRESETS = [2, 4, 8, 9, 12, 16];
+const GRID_PRESETS = [4, 8, 9, 12, 16, 32];
 const DEFAULT_SIZE = 9;
+const REFERENCE_SIZE = 9;
 const VIEWBOX_MIN = -6;
 const VIEWBOX_SIZE = 112;
 const VOLUME_PRESETS = [
@@ -13,7 +14,7 @@ const state = {
   rows: DEFAULT_SIZE,
   cols: DEFAULT_SIZE,
   tileScale: 1,
-  volume: 100,
+  volume: 150,
   volumePreset: "custom",
   gap: 1.35,
   activeColor: "#303032",
@@ -31,40 +32,31 @@ function createCells(rows = state.rows, cols = state.cols, fill = false) {
 
 function createInitialCells(rows, cols) {
   const cells = createCells(rows, cols, false);
-  const referenceTiles = [
-    [0, 1],
-    [0, 4],
-    [1, 2],
-    [1, 3],
-    [1, 4],
-    [1, 8],
-    [2, 3],
-    [2, 4],
-    [2, 7],
-    [3, 4],
-    [3, 7],
-    [3, 8],
-    [4, 1],
-    [4, 2],
-    [4, 4],
-    [4, 5],
-    [4, 9],
-    [5, 0],
-    [5, 2],
-    [5, 3],
-    [5, 4],
-    [6, 3],
-    [6, 4],
-    [7, 4],
-    [7, 5],
-    [8, 3],
-    [8, 4],
-    [8, 5],
-  ];
+const referenceTiles = [
+  [0, 1], [0, 4],
+
+  [1, 2], [1, 3], [1, 4], [1, 7],
+
+  [2, 3], [2, 4], [2, 6],
+
+  [3, 4], [3, 6], [3, 7],
+
+  [4, 1], [4, 2], [4, 4], [4, 5], [4, 8],
+
+  [5, 0], [5, 2], [5, 3], [5, 4],
+
+  [6, 3], [6, 4],
+
+  [7, 4], [7, 5],
+
+  [8, 3], [8, 4], [8, 5],
+];
+
+
 
   referenceTiles.forEach(([refRow, refCol]) => {
-    const row = Math.round((refRow / 9) * (rows - 1));
-    const col = Math.round((refCol / 9) * (cols - 1));
+    const row = Math.round((refRow / (REFERENCE_SIZE - 1)) * (rows - 1));
+    const col = Math.round((refCol / (REFERENCE_SIZE - 1)) * (cols - 1));
     if (isVisibleTile(row, col, rows, cols)) cells[row][col] = true;
   });
 
@@ -215,11 +207,30 @@ function squeezeTileByDistance(layout, row, col) {
 }
 
 
+function responsiveTileGap(slot, rows = state.rows, cols = state.cols) {
+  const size = Math.max(rows, cols);
+  if (size <= DEFAULT_SIZE) return state.gap;
+
+  const progress = Math.min(1, (size - DEFAULT_SIZE) / (32 - DEFAULT_SIZE));
+  const maxGapRatio = 0.34 - progress * 0.14;
+  return Math.min(state.gap, slot * maxGapRatio);
+}
+
+function responsiveTileScale(rows = state.rows, cols = state.cols) {
+  const size = Math.max(rows, cols);
+  if (size <= DEFAULT_SIZE) return 1;
+
+  const progress = Math.min(1, (size - DEFAULT_SIZE) / (32 - DEFAULT_SIZE));
+  return 1 + progress * 0.12;
+}
+
 function tileLayout(row, col) {
   const padding = 7;
   const horizontalSlot = (100 - padding * 2) / state.cols;
   const verticalSlot = (100 - padding * 2) / state.rows;
   const slot = Math.min(horizontalSlot, verticalSlot);
+  const gap = responsiveTileGap(slot);
+  const sizeScale = state.tileScale * responsiveTileScale();
 
   const offsetX = (100 - slot * state.cols) / 2;
   const offsetY = (100 - slot * state.rows) / 2;
@@ -230,7 +241,7 @@ function tileLayout(row, col) {
   const { distance, edgeFactor, scaleX, scaleY } = squeezeParams(row, col);
 
   // Чем ближе к краю, тем меньше отступ между плитками
-  const dynamicGap = state.gap * (1 - edgeFactor * 0.75 * sphereStrength());
+  const dynamicGap = gap * (1 - edgeFactor * 0.75 * sphereStrength());
 
   const scale = edgeScaleFor(distance);
 
@@ -240,8 +251,8 @@ function tileLayout(row, col) {
   const compensationX = Math.min(1, 1 / scaleX);
   const compensationY = Math.min(1, 1 / scaleY);
 
-  const sizeX = Math.max(0, (slot - dynamicGap) * scale * state.tileScale * compensationX);
-  const sizeY = Math.max(0, (slot - dynamicGap) * scale * state.tileScale * compensationY);
+  const sizeX = Math.max(0, (slot - dynamicGap) * scale * sizeScale * compensationX);
+  const sizeY = Math.max(0, (slot - dynamicGap) * scale * sizeScale * compensationY);
 
   const left = baseLeft + (slot - sizeX) / 2;
   const top = baseTop + (slot - sizeY) / 2;

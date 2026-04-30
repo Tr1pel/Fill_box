@@ -52,18 +52,17 @@ button {
 }
 
 .grid-editor {
-  position: relative;
+  display: block;
   width: min(78vmin, 760px);
   aspect-ratio: 1;
+  overflow: visible;
   touch-action: none;
   user-select: none;
 }
 
 .cell {
-  position: absolute;
-  padding: 0;
-  border: 0;
-  background: var(--inactive-cell);
+  stroke: transparent;
+  stroke-width: 0;
   cursor: crosshair;
   transition: filter 100ms ease;
 }
@@ -72,10 +71,6 @@ button {
 .cell:focus-visible {
   outline: 0;
   filter: brightness(0.96);
-}
-
-.cell.is-active {
-  background: var(--active-cell);
 }
 
 .control-panel {
@@ -136,17 +131,19 @@ legend {
 .preset-row,
 .field-row,
 .mode-row,
+.volume-row,
 .export-row {
   display: grid;
   gap: 8px;
 }
 
 .preset-row {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .field-row,
 .mode-row,
+.volume-row,
 .export-row {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -174,6 +171,13 @@ legend {
 
 .field input[type="color"] {
   padding: 5px;
+}
+
+.field input[type="range"] {
+  min-height: 28px;
+  padding: 0;
+  accent-color: var(--ink);
+  background: transparent;
 }
 
 .button {
@@ -204,13 +208,6 @@ legend {
 
 .button-full {
   width: 100%;
-}
-
-.status-line {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.45;
 }
 
 @media (max-width: 820px) {

@@ -5,7 +5,7 @@ const VIEWBOX_MIN = -6;
 const VIEWBOX_SIZE = 112;
 const VOLUME_PRESETS = [
   { id: "flat", label: "Плоско" },
-  { id: "convex", label: "выпулкло" },
+  { id: "convex", label: "выпукло" },
 ];
 
 const app = document.querySelector("#app");
@@ -15,7 +15,7 @@ const state = {
   cols: DEFAULT_SIZE,
   tileScale: 1,
   volume: 150,
-  volumePreset: "custom",
+  volumePreset: "convex",
   gap: 1.35,
   activeColor: "#303032",
   inactiveColor: "#ededeb",

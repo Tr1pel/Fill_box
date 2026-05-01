@@ -3,6 +3,8 @@ const DEFAULT_SIZE = 9;
 const REFERENCE_SIZE = 9;
 const VIEWBOX_MIN = -6;
 const VIEWBOX_SIZE = 112;
+const INTRO_TITLE = "by REFLECTION";
+const ANIMEJS_URL = "https://esm.sh/animejs";
 const VOLUME_PRESETS = [
   { id: "flat", label: "Плоско" },
   { id: "convex", label: "выпукло" },
@@ -684,8 +686,64 @@ function renderGridOnly() {
 }
 
 function renderApp() {
+  const previousPanelScroll = document.querySelector(".control-panel")?.scrollTop ?? 0;
   setCssVariables();
   app.replaceChildren(GridEditor(), ControlPanel());
+  const nextPanel = document.querySelector(".control-panel");
+  if (nextPanel) nextPanel.scrollTop = previousPanelScroll;
+}
+
+function IntroScreen() {
+  const intro = document.createElement("section");
+  const content = document.createElement("div");
+  const title = document.createElement("p");
+
+  intro.className = "intro-screen";
+  intro.setAttribute("aria-label", INTRO_TITLE);
+  content.className = "intro-content";
+  title.className = "intro-title";
+
+  title.dataset.introTitle = "";
+  title.textContent = "";
+
+  content.append(title);
+  intro.append(content);
+  return intro;
+}
+
+function finishIntro(intro) {
+  app.classList.remove("is-intro-pending");
+  intro.classList.add("is-leaving");
+  intro.addEventListener("transitionend", () => intro.remove(), { once: true });
+  window.setTimeout(() => intro.remove(), 900);
+}
+
+async function playIntro() {
+  const intro = IntroScreen();
+  const title = intro.querySelector("[data-intro-title]");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  app.classList.add("is-intro-pending");
+  document.body.append(intro);
+  title.textContent = INTRO_TITLE;
+
+  if (reduceMotion) {
+    window.setTimeout(() => finishIntro(intro), 350);
+    return;
+  }
+
+  try {
+    const { animate, scrambleText } = await import(ANIMEJS_URL);
+    const introAnimation = animate(title, {
+      innerHTML: scrambleText({ chars: "blocks" }),
+    });
+
+    if (introAnimation?.then) await introAnimation;
+  } catch (error) {
+    console.warn("Anime.js intro animation failed", error);
+  }
+
+  window.setTimeout(() => finishIntro(intro), 525);
 }
 
 function distanceBetween(a, b) {
@@ -790,3 +848,4 @@ function downloadFile(href, filename) {
 }
 
 renderApp();
+playIntro();
